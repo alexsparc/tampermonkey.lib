@@ -5,17 +5,55 @@ if (typeof window._tmlib === 'undefined') {
 window._tmlib.Cleaner = (() => {
     'use strict';
 
+    const _propTag = 'tm-data'
+    const _propVal = 'cleared'
+
+    let _config = {
+        'logging': false,
+        'interval.defaultLength': 1,
+        'interval.growCoefficient': 1.4,
+    };
+
     let _handlers = [];
     let _intervals = {};
 
-    let _clearInterval = name => {
-        clearInterval(_intervals[name]);
-        delete (_intervals[name]);
+
+    let _log = (msg) => {
+        if (_config['logging']) {
+            console.log(msg)
+        }
+    }
+
+    let _startInterval = (conf, intervalLength) => {
+        _intervals[conf.name] = {
+            id: setInterval(() => _clean(conf), intervalLength * 1000),
+            length: intervalLength
+        }
+    }
+
+    let _stopInterval = name => {
+        clearInterval(_intervals[name].id);
+        delete (_intervals[name].id);
+        _log(`${name} stopped.`)
+    }
+
+    let _prolongInterval = conf => {
+        let newIntervalLength = Math.round((_intervals[conf.name].length * _config['interval.growCoefficient'] + Number.EPSILON) * 100) / 100
+        _stopInterval(conf.name);
+        _startInterval(conf, newIntervalLength);
+        _log(`${conf.name} prolonged to ${newIntervalLength}`)
+    }
+
+    let _resetInterval = conf => {
+        _stopInterval(conf.name);
+        _startInterval(conf, _config['interval.defaultLength']);
+        _log(`${conf.name} reset to ${_config['interval.defaultLength']}`)
     }
 
     let _hideElem = (e) => {
         if (e instanceof HTMLElement) {
             e.style.setProperty('display', 'none', 'important')
+            e.setAttribute(_propTag, _propVal)
         }
     }
 
@@ -25,9 +63,28 @@ window._tmlib.Cleaner = (() => {
         }
     }
 
-    let _log = (msg) => console.log(msg)
+    let _clean = conf => {
+        let elems = conf.callable()
+            .filter(elem => !elem.hasAttribute(_propTag) || elem.getAttribute(_propTag) !== _propVal)
+        if (elems.length > 0) {
+            _hideElems(elems)
+            _resetInterval(conf)
+        } else {
+            _prolongInterval(conf)
+        }
+    }
 
     return {
+        configure: kvConf => {
+            if (kvConf instanceof Object) {
+                Object.keys(kvConf).forEach(key => {
+                    if (_config.hasOwnProperty(key)) {
+                        _config[key] = kvConf[key]
+                    }
+                });
+            }
+        },
+
         push: (name, callable, interval = 0) => {
             _handlers.push({
                 name: name, callable: callable, interval: interval
@@ -35,19 +92,10 @@ window._tmlib.Cleaner = (() => {
         },
 
         run: () => {
-            _handlers.forEach(conf => {
-                _intervals[conf.name] = setInterval(() => {
-                    let elems = conf.callable()
-                    if (elems.length > 0) {
-                        _hideElems(elems)
-                    } else {
-                        _clearInterval(conf.name)
-                    }
-                }, conf.interval * 1000)
-            })
+            _handlers.forEach(conf => _startInterval(conf, _config['interval.defaultLength']))
         },
 
-        stop: () => Object.keys(_intervals).forEach(name => _clearInterval(name))
+        stop: () => Object.keys(_intervals).forEach(name => _stopInterval(name))
     };
 })();
 
@@ -62,10 +110,9 @@ window._tmlib.DOMWalker = (() => {
             this.#selection = Array.from(document.querySelectorAll(selector))
         }
 
-        getSelection() {
+        nodes() {
             return this.#selection
         }
-
 
         up(times = 1) {
             if (this.#selection.length > 0) {
@@ -77,7 +124,6 @@ window._tmlib.DOMWalker = (() => {
             }
             return this
         }
-
 
         down(selector) {
             if (this.#selection.length > 0) {
@@ -104,11 +150,7 @@ window._tmlib.DOMWalker = (() => {
 
         siblings() {
             if (this.#selection.length > 0) {
-                if (this.#selection.length > 1) {
-                    console.error('Multiple nodes detected. Apply a strategy before go wider')
-                } else {
-                    this.#selection = this.up().children()
-                }
+                this.#selection = this.up().children()
             }
             return this
         }
@@ -135,6 +177,8 @@ window._tmlib.DOMWalker = (() => {
             return this
         }
 
+        /** Strategies */
+
         first() {
             if (this.#selection.length > 0) {
                 this.#selection = [this.#selection[0]]
@@ -159,7 +203,7 @@ window._tmlib.DOMWalker = (() => {
     }
 
     return {
-        init: selector => new Walker(selector)
+        get: selector => new Walker(selector)
     };
 
 })();
