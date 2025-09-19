@@ -85,11 +85,7 @@ window._tmlib.Cleaner = (() => {
             }
         },
 
-        push: (name, callable, interval = 0) => {
-            _handlers.push({
-                name: name, callable: callable, interval: interval
-            })
-        },
+        push: (name, callable) => _handlers.push({ name: name, callable: callable}),
 
         run: () => {
             _handlers.forEach(conf => _startInterval(conf, _config['interval.defaultLength']))
