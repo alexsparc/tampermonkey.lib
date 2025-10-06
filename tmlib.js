@@ -207,23 +207,25 @@ window._tmlib.DOMWalker = (() => {
 window._tmlib.Popper = (() => {
 
     /* Definitions */
-    const popperContainerClass = '.tm-popper';
+    const popperContainerClass = 'tm-popper';
+    let popperNode = null;
 
-    /* Install CSS */
-    let node = document.createElement('style');
-    node.textContent = `@keyframes popInOut {0% {opacity: 0; transform: scale(1.2);} 30% {opacity: 1; transform: scale(1); bottom: 0;} 100% {opacity: 0; bottom: 20vh;}}
-        .tm-popper {position: fixed; display: flex; left: 60px; bottom: 20px; z-index: 1000;}
-        .tm-pop {position: relative; width: 4px; height: 4px; margin: 0 0 1px 1px; background-color: #c00; display: block; border-radius: 50%;}
-        .animate-pop {animation: popInOut .7s cubic-bezier(0.7, 0, 0.7, 0) forwards;}`;
-    document.head.appendChild(node)
+    /* Install */
+    document.addEventListener('DOMContentLoaded', () => {
+        const styleNode = document.createElement('style');
+        styleNode.textContent = `
+            @keyframes popInOut {0% {opacity: 0; transform: scale(1.2);} 30% {opacity: 1; transform: scale(1); bottom: 0;} 100% {opacity: 0; bottom: 20vh;}}
+            .tm-popper {position: fixed; display: flex; left: 60px; bottom: 20px; z-index: 1000;}
+            .tm-pop {position: relative; width: 4px; height: 4px; margin: 0 0 1px 1px; background-color: #c00; display: block; border-radius: 50%;}
+            .animate-pop {animation: popInOut .7s cubic-bezier(0.7, 0, 0.7, 0) forwards;}
+        `;
 
-    /* Install HTML */
-    node = document.createElement('div');
-    node.className = popperContainerClass;
-    document.body.appendChild(node);
+        popperNode = document.createElement('div');
+        popperNode.className = popperContainerClass;
 
-    /* Bind */
-    const popperNode = document.querySelector(popperContainerClass)
+        document.head.appendChild(styleNode);
+        document.body.appendChild(popperNode);
+    });
 
     /* Return interface */
     return {
@@ -232,7 +234,9 @@ window._tmlib.Popper = (() => {
             node.className = 'tm-pop animate-pop';
             node.addEventListener('animationend', () => node.remove());
 
-            popperNode.prepend(node)
+            if (popperNode) {
+                popperNode.prepend(node);
+            }
         }
     }
 })();
