@@ -218,10 +218,10 @@ window._tmlib.Popper = (() => {
 
         const styleNode = document.createElement('style');
         styleNode.textContent = `
-            @keyframes popInOut {0% {opacity: 0; transform: scale(1.2);} 30% {opacity: 1; transform: scale(1); left: 0;} 100% {opacity: 0; left: 10vw;}}
+            @keyframes popInOut {0% {opacity: 0; transform: scale(1.3);} 30% {opacity: 1; transform: scale(1); bottom: 0;} 100% {opacity: 0; transform: scale(1.5); bottom: 15vh;}}
             .tm-popper {position: fixed; display: flex; left: 60px; bottom: 20px; z-index: 1000;}
             .tm-pop {position: relative; width: 4px; height: 4px; margin: 0 0 1px 1px; background-color: #c00; display: block; border-radius: 50%;}
-            .animate-pop {animation: popInOut .7s cubic-bezier(0.7, 0, 0.7, 0) forwards;}
+            .animate-pop {animation: popInOut 1.5s cubic-bezier(0.7, 0, 0.7, 0) forwards;}
         `;
 
         popperNode = document.createElement('div');
