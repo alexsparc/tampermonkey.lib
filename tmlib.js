@@ -85,7 +85,7 @@ window._tmlib.Cleaner = (() => {
             }
         },
 
-        push: (name, callable) => _handlers.push({ name: name, callable: callable}),
+        push: (name, callable) => _handlers.push({name: name, callable: callable}),
 
         run: () => {
             _handlers.forEach(conf => _startInterval(conf, _config['interval.defaultLength']))
@@ -202,4 +202,37 @@ window._tmlib.DOMWalker = (() => {
         get: selector => new Walker(selector)
     };
 
+})();
+
+window._tmlib.Popper = (() => {
+
+    /* Definitions */
+    const popperContainerClass = '.tm-popper';
+
+    /* Install CSS */
+    let node = document.createElement('style');
+    node.textContent = `@keyframes popInOut {0% {opacity: 0; transform: scale(1.2);} 30% {opacity: 1; transform: scale(1); bottom: 0;} 100% {opacity: 0; bottom: 20vh;}}
+        .tm-popper {position: fixed; display: flex; left: 60px; bottom: 20px; z-index: 1000;}
+        .tm-pop {position: relative; width: 4px; height: 4px; margin: 0 0 1px 1px; background-color: #c00; display: block; border-radius: 50%;}
+        .animate-pop {animation: popInOut .7s cubic-bezier(0.7, 0, 0.7, 0) forwards;}`;
+    document.head.appendChild(node)
+
+    /* Install HTML */
+    node = document.createElement('div');
+    node.className = popperContainerClass;
+    document.body.appendChild(node);
+
+    /* Bind */
+    const popperNode = document.querySelector(popperContainerClass)
+
+    /* Return interface */
+    return {
+        pop: () => {
+            const node = document.createElement('div');
+            node.className = 'tm-pop animate-pop';
+            node.addEventListener('animationend', () => node.remove());
+
+            popperNode.prepend(node)
+        }
+    }
 })();
