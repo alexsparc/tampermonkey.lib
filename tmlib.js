@@ -220,7 +220,7 @@ window._tmlib.Popper = (() => {
     const popperNode = document.createElement('div');
     popperNode.className = 'tm-popper';
 
-    popsNode = document.createElement('div');
+    const popsNode = document.createElement('div');
     popsNode.className = 'tm-pops';
     popperNode.appendChild(popsNode)
 
@@ -258,8 +258,7 @@ window._tmlib.Popper = (() => {
                 ],
                 3000,
             );
-            this.#animation.finished.then(() => this.#node.classList.add('hidden')).catch(() => {
-            });
+            this.#animation.finished.then(() => this.#node.classList.add('hidden')).catch(e => e);
         }
     }
 
@@ -303,7 +302,6 @@ window._tmlib.Popper = (() => {
         clearInterval(intervalId);
     }, 100);
 
-    /* Return interface */
     return {
         pop: () => {
             counter.bump();
