@@ -285,7 +285,8 @@ window._tmlib.Popper = (() => {
 
     /* Definitions */
     let pops = null;
-    let counter = null
+    let counter = null;
+    let installed = false;
 
     /* Install */
     const intervalId = setInterval(() => {
@@ -299,13 +300,21 @@ window._tmlib.Popper = (() => {
         counter = new Counter();
         pops = new Pops();
 
+        installed = true;
         clearInterval(intervalId);
     }, 100);
 
     return {
-        pop: () => {
-            counter.bump();
-            pops.emit();
-        }
+        pop: async () => new Promise(resolve => {
+            const intervalId = setInterval(() => {
+                if (installed) {
+                    counter.bump();
+                    pops.emit();
+                    clearInterval(intervalId);
+                    resolve();
+                }
+            }, 100);
+        }),
     }
+
 })();
