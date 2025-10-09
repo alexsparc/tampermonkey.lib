@@ -206,9 +206,87 @@ window._tmlib.DOMWalker = (() => {
 
 window._tmlib.Popper = (() => {
 
+    /* Static */
+    const styleNode = document.createElement('style');
+    styleNode.textContent = `
+            .tm-popper {position: fixed; left: 60px; bottom: 20px; z-index: 1000;}
+            .tm-pops {display: flex;}
+            .tm-pop {position: relative; width: 2px; height: 2px; margin: 0 0 1px 1px; background-color: #fff; border: 1px solid #c00; display: block; border-radius: 50%;}
+            .tm-popper-counter {font-family: Arial, serif;}
+            .tm-popper-counter.hidden {opacity: 0;}
+            .tm-popper-counter:after {content: ' POPS!'; display: inline-block; margin-left: 2px; font-size: .6em; font-weight: bold;}
+        `;
+
+    const popperNode = document.createElement('div');
+    popperNode.className = 'tm-popper';
+
+    popsNode = document.createElement('div');
+    popsNode.className = 'tm-pops';
+    popperNode.appendChild(popsNode)
+
+    const counterNode = document.createElement('div');
+    counterNode.className = 'tm-popper-counter hidden';
+    popperNode.appendChild(counterNode);
+
+
+    /* Classes */
+    class Counter {
+        #val = 0;
+        #animation = null;
+        #node = null;
+
+        constructor() {
+            this.#node = document.querySelector('.tm-popper-counter');
+        }
+
+        bump() {
+            this.#val++;
+            this.#node.innerText = this.#val;
+            if (this.#animation) {
+                if (['idle', 'running'].includes(this.#animation.playState)) {
+                    this.#animation.cancel();
+                }
+            }
+
+            this.#node.classList.remove('hidden');
+            this.#animation = this.#node.animate(
+                [
+                    {opacity: .5, transform: 'translateX(-1px)', offset: 0, easing: 'ease-in'},
+                    {opacity: 1, transform: 'translateX(0)', offset: .05, easing: 'cubic-bezier(.75,.01,.87,.42)'},
+                    {opacity: 0, transform: 'translateX(5vw)', offset: 1},
+                    {opacity: 0, offset: 1}
+                ],
+                3000,
+            );
+            this.#animation.finished.then(() => this.#node.classList.add('hidden')).catch(() => {
+            });
+        }
+    }
+
+    class Pops {
+        #node = null;
+
+        constructor() {
+            this.#node = document.querySelector('.tm-pops');
+        }
+
+        emit() {
+            const node = document.createElement('div');
+            node.className = 'tm-pop';
+            this.#node.prepend(node);
+            node.animate([
+                    {opacity: 0, transform: 'scale(1.3)', offset: 0, easing: 'ease-in'},
+                    {opacity: 1, transform: 'scale(1) translateY(0)', offset: .3, easing: 'cubic-bezier(.75,.01,.87,.42)'},
+                    {opacity: 0, transform: 'scale(2) translateY(-10vh)', offset: 1},
+                ],
+                1200,
+            ).finished.then(() => node.remove()).catch(e => e)
+        }
+    }
+
     /* Definitions */
-    const popperContainerClass = 'tm-popper';
-    let popperNode = null;
+    let pops = null;
+    let counter = null
 
     /* Install */
     const intervalId = setInterval(() => {
@@ -216,34 +294,20 @@ window._tmlib.Popper = (() => {
             return;
         }
 
-        const styleNode = document.createElement('style');
-        styleNode.textContent = `
-            @keyframes popInOut {0% {opacity: 0; transform: scale(1.3);} 30% {opacity: 1; transform: scale(1); bottom: 0;} 100% {opacity: 0; transform: scale(1.5); bottom: 15vh;}}
-            .tm-popper {position: fixed; display: flex; left: 60px; bottom: 20px; z-index: 1000;}
-            .tm-pop {position: relative; width: 4px; height: 4px; margin: 0 0 1px 1px; background-color: #c00; display: block; border-radius: 50%;}
-            .animate-pop {animation: popInOut 1.5s cubic-bezier(0.7, 0, 0.7, 0) forwards;}
-        `;
-
-        popperNode = document.createElement('div');
-        popperNode.className = popperContainerClass;
-
         document.head.appendChild(styleNode);
         document.body.appendChild(popperNode);
 
-        clearInterval(intervalId);
+        counter = new Counter();
+        pops = new Pops();
 
+        clearInterval(intervalId);
     }, 100);
 
     /* Return interface */
     return {
         pop: () => {
-            const node = document.createElement('div');
-            node.className = 'tm-pop animate-pop';
-            node.addEventListener('animationend', () => node.remove());
-
-            if (popperNode) {
-                popperNode.prepend(node);
-            }
+            counter.bump();
+            pops.emit();
         }
     }
 })();
